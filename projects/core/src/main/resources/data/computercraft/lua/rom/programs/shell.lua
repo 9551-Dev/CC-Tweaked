@@ -85,8 +85,21 @@ else
     bgColour = colours.black
 end
 
+local tokenisableTypes = {
+    ["string"] = true,
+    ["number"] = true
+}
+
 local function tokenise(...)
-    local sLine = table.concat({ ... }, " ")
+    local sArgs = {...}
+    local consecutiveInputs = 0
+    for i = 1, select('#', ...) do
+        -- numbers get automatically converted via concat
+        if not tokenisableTypes[type(sArgs[i])] then break end
+        consecutiveInputs = consecutiveInputs + 1
+    end
+
+    local sLine = table.concat(sArgs, " ", 1, consecutiveInputs)
     local tWords = {}
     local bQuoted = false
     for match in string.gmatch(sLine .. "\"", "(.-)\"") do
@@ -262,7 +275,8 @@ end
 -- @changed 1.83.0 `arg` is now added to the environment.
 function shell.run(...)
     for i = 1, select('#', ...) do
-        expect(i, select(i, ...), "string")
+        -- allow numbers for backwards compatbility
+        expect(i, select(i, ...), "string", "number")
     end
 
     local tWords = tokenise(...)
