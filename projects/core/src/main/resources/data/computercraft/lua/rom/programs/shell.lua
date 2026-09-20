@@ -87,11 +87,11 @@ end
 
 local tokenisableTypes = {
     ["string"] = true,
-    ["number"] = true
+    ["number"] = true,
 }
 
 local function tokenise(...)
-    local sArgs = {...}
+    local sArgs = { ... }
     local consecutiveInputs = 0
     for i = 1, select('#', ...) do
         -- numbers get automatically converted via concat
