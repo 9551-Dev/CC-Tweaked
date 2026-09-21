@@ -57,6 +57,11 @@ local tAliases = parentShell and parentShell.aliases() or {}
 local tCompletionInfo = parentShell and parentShell.getCompletionInfo() or {}
 local tProgramStack = {}
 
+local tokenisableTypes = {
+    ["string"] = true,
+    ["number"] = true,
+}
+
 local shell = {} --- @export
 local function createShellEnv(dir)
     local env = { shell = shell, multishell = multishell }
@@ -85,24 +90,10 @@ else
     bgColour = colours.black
 end
 
-local tokenisableTypes = {
-    ["string"] = true,
-    ["number"] = true,
-}
-
-local function tokenise(...)
-    local sArgs = { ... }
-    local consecutiveInputs = 0
-    for i = 1, select('#', ...) do
-        -- numbers get automatically converted via concat
-        if not tokenisableTypes[type(sArgs[i])] then break end
-        consecutiveInputs = consecutiveInputs + 1
-    end
-
-    local sLine = table.concat(sArgs, " ", 1, consecutiveInputs)
+local function tokenise(sTokenInput)
     local tWords = {}
     local bQuoted = false
-    for match in string.gmatch(sLine .. "\"", "(.-)\"") do
+    for match in string.gmatch(sTokenInput .. "\"", "(.-)\"") do
         if bQuoted then
             table.insert(tWords, match)
         else
@@ -274,13 +265,24 @@ end
 -- @changed 1.80pr1 Programs now get their own environment instead of sharing the same one.
 -- @changed 1.83.0 `arg` is now added to the environment.
 function shell.run(...)
+    local consecutiveInputs = 0
+    local counterLock = false
+    local tokenArray = { ... }
     for i = 1, select('#', ...) do
         -- allow numbers/nils for backwards compatbility
-        -- nils get automatically cut by tokenise, as its disallowed type
-        expect(i, select(i, ...), "string", "number", "nil")
+        -- everything past nil (invalid type) trimmed in concat
+        local value = tokenArray[i]
+
+        expect(i, value, "string", "number", "nil")
+
+        if not tokenisableTypes[value] then counterLock = true end
+        if not counterLock then
+            consecutiveInputs = i
+        end
     end
 
-    local tWords = tokenise(...)
+    local tokenString = table.concat(tokenArray, " ", 1, consecutiveInputs)
+    local tWords = tokenise(tokenString)
     local sCommand = tWords[1]
     if sCommand then
         return shell.execute(sCommand, table.unpack(tWords, 2))
