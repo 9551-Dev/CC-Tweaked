@@ -133,7 +133,7 @@ describe("The shell", function()
 
         it("validates arguments", function()
             shell.run("ls")
-            expect.error(shell.run,true):eq("bad argument #2 (string or number expected, got boolean)")
+            expect.error(shell.run, true):eq("bad argument #1 (string or number expected, got boolean)")
         end)
     end)
 
