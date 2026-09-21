@@ -275,8 +275,9 @@ end
 -- @changed 1.83.0 `arg` is now added to the environment.
 function shell.run(...)
     for i = 1, select('#', ...) do
-        -- allow numbers for backwards compatbility
-        expect(i, select(i, ...), "string", "number")
+        -- allow numbers/nils for backwards compatbility
+        -- nils get automatically cut by tokenise, as its disallowed type
+        expect(i, select(i, ...), "string", "number", "nil")
     end
 
     local tWords = tokenise(...)
@@ -284,6 +285,7 @@ function shell.run(...)
     if sCommand then
         return shell.execute(sCommand, table.unpack(tWords, 2))
     end
+
     return false
 end
 
