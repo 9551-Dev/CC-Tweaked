@@ -113,7 +113,7 @@ describe("The shell", function()
 
     describe("shell.run", function()
         it("tokenises the arguments", function()
-            shell.run("/test-rom/data/dump-args", "arg1", "arg 2", 4, "arg5", 6, nil, "mlem")
+            shell.run("/test-rom/data/dump-args", "arg1", "arg 2", 3)
 
             local args = _G.__arg
             _G.__arg = nil
@@ -123,16 +123,11 @@ describe("The shell", function()
                 "arg1",
                 "arg",
                 "2",
-                "4",
-                "arg5",
-                "6",
-                nil,
-                nil,
+                "3",
             }
         end)
 
         it("validates arguments", function()
-            shell.run("ls")
             expect.error(shell.run, true):eq("bad argument #1 (string or number expected, got boolean)")
         end)
     end)

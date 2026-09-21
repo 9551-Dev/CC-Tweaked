@@ -57,11 +57,6 @@ local tAliases = parentShell and parentShell.aliases() or {}
 local tCompletionInfo = parentShell and parentShell.getCompletionInfo() or {}
 local tProgramStack = {}
 
-local tokenisableTypes = {
-    ["string"] = true,
-    ["number"] = true,
-}
-
 local shell = {} --- @export
 local function createShellEnv(dir)
     local env = { shell = shell, multishell = multishell }
@@ -90,10 +85,10 @@ else
     bgColour = colours.black
 end
 
-local function tokenise(sTokenInput)
+local function tokenise(sLine)
     local tWords = {}
     local bQuoted = false
-    for match in string.gmatch(sTokenInput .. "\"", "(.-)\"") do
+    for match in string.gmatch(sLine .. "\"", "(.-)\"") do
         if bQuoted then
             table.insert(tWords, match)
         else
@@ -265,29 +260,14 @@ end
 -- @changed 1.80pr1 Programs now get their own environment instead of sharing the same one.
 -- @changed 1.83.0 `arg` is now added to the environment.
 function shell.run(...)
-    local consecutiveInputs = 0
-    local counterLock = false
-    local tokenArray = { ... }
-    for i = 1, select('#', ...) do
-        -- allow numbers/nils for backwards compatbility
-        -- everything past nil (invalid type) trimmed in concat
-        local value = tokenArray[i]
+    local args = table.pack(...)
+    for i = 1, args.n do expect(i, args[i], "string", "number") end
 
-        expect(i, value, "string", "number", "nil")
-
-        if not tokenisableTypes[value] then counterLock = true end
-        if not counterLock then
-            consecutiveInputs = i
-        end
-    end
-
-    local tokenString = table.concat(tokenArray, " ", 1, consecutiveInputs)
-    local tWords = tokenise(tokenString)
+    local tWords = tokenise(table.concat(args, " ", 1, args.n))
     local sCommand = tWords[1]
     if sCommand then
         return shell.execute(sCommand, table.unpack(tWords, 2))
     end
-
     return false
 end
 
